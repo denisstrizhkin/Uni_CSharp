@@ -1,4 +1,4 @@
-﻿namespace lab1; 
+﻿namespace lab1;
 
 internal abstract class Program {
     private class TypeContainer {
@@ -11,6 +11,12 @@ internal abstract class Program {
         public Type Get() {
             return _type;
         }
+    }
+
+    private class MethodOverload {
+        public int Count = 1;
+        public int MinArgs = int.MaxValue;
+        public int MaxArgs = int.MinValue;
     }
 
     private class Menu {
@@ -45,8 +51,7 @@ internal abstract class Program {
                     PrintMenuInfo();
                     Console.Write("Неправильный ввод, попробуйте еще: ");
                 }
-            }
-            else {
+            } else {
                 _func();
             }
         }
@@ -59,20 +64,15 @@ internal abstract class Program {
             if (_message != null) {
                 Console.WriteLine(_message());
             }
+
             foreach (var pair in _menuItems) {
                 Console.WriteLine(pair.Key + " - " + pair.Value._description);
             }
         }
     }
 
-    public static void Main(string[] args) {
-        var typeContainer = new TypeContainer();
-
-        var mainMenu = new Menu("Выход в главное меню", () => "Информация по типам:");
-        var quitMenu = new Menu("Выход из программы", () => Environment.Exit(1));
-        var typeSelectMenu = new Menu("Выбрать тип из списка", () => "Информация по типам\nВыберите тип:\n------");
-
-        var generalInfoMenu = new Menu("Общая информация по типам", () => {
+    private static Menu CreateGeneralInfoMenu(Menu mainMenu) {
+        return new Menu("Общая информация по типам", () => {
             Console.WriteLine("Общая информация по типам");
             Console.WriteLine("Подключенные сборки: 17");
             Console.WriteLine("Всего типов по всем подключенным сборкам: 26103");
@@ -84,8 +84,10 @@ internal abstract class Program {
             Console.ReadKey();
             mainMenu.Run();
         });
+    }
 
-        var typeInfoMenu = new Menu("Информация по типу", () => {
+    private static Menu CreateTypeInfoMenu(TypeContainer typeContainer) {
+        return new Menu("Информация по типу", () => {
             var type = typeContainer.Get();
             return $"Информация по типу: {type.FullName}\n" +
                    $"    Значимый тип: {(type.IsValueType ? '+' : '-')}\n" +
@@ -98,22 +100,43 @@ internal abstract class Program {
                    $"    Список полей: {string.Join(", ", type.GetFields().ToList().ConvertAll(f => f.Name))}\n" +
                    $"    Список свойств: {string.Join(", ", type.GetProperties().ToList().ConvertAll(f => f.Name))}\n";
         });
+    }
 
-        var additionalTypeInfoMenu = new Menu("Вывод дополнительной информации по методам", () => {
+    private static Menu CreateAdditionalTypeInfoMenu(TypeContainer typeContainer) {
+        return new Menu("Вывод дополнительной информации по методам", () => {
             var methods = typeContainer.Get().GetMethods();
-            var overloads = new Dictionary<string, int>();
+            var overloads = new Dictionary<string, MethodOverload>();
 
             foreach (var m in methods) {
                 if (overloads.ContainsKey(m.Name)) {
-                    overloads[m.Name]++;
+                    overloads[m.Name].Count++;
+                } else {
+                    overloads.Add(m.Name, new MethodOverload());
                 }
-                else {
-                    overloads.Add(m.Name, 1);
-                }
+
+                overloads[m.Name].MinArgs = Math.Min(m.GetParameters().Length, overloads[m.Name].MinArgs);
+                overloads[m.Name].MaxArgs = Math.Max(m.GetParameters().Length, overloads[m.Name].MaxArgs);
             }
 
-            return "test";
+            var result = $"Методы типа {typeContainer.Get().FullName}\n" +
+                         $"{"Название",-20} {"Число перегрузок",-20} {"Число параметров",-20}\n";
+            return overloads.Aggregate(result,
+                (current, pair) =>
+                    current +
+                    $"{pair.Key,-20} {pair.Value.Count,-20} " +
+                    $"{(pair.Value.MinArgs == pair.Value.MaxArgs ? pair.Value.MinArgs : pair.Value.MinArgs + ".." + pair.Value.MaxArgs),-20}\n");
         });
+    }
+
+    public static void Main(string[] args) {
+        var typeContainer = new TypeContainer();
+
+        var mainMenu = new Menu("Выход в главное меню", () => "Информация по типам:");
+        var quitMenu = new Menu("Выход из программы", () => Environment.Exit(1));
+        var typeSelectMenu = new Menu("Выбрать тип из списка", () => "Информация по типам\nВыберите тип:\n------");
+        var generalInfoMenu = CreateGeneralInfoMenu(mainMenu);
+        var typeInfoMenu = CreateTypeInfoMenu(typeContainer);
+        var additionalTypeInfoMenu = CreateAdditionalTypeInfoMenu(typeContainer);
 
         var selectTypeUintMenu = new Menu("uint", () => {
             typeContainer.Set(typeof(uint));
@@ -158,6 +181,8 @@ internal abstract class Program {
 
         typeInfoMenu.AddMenuItem('0', mainMenu);
         typeInfoMenu.AddMenuItem('M', additionalTypeInfoMenu);
+
+        additionalTypeInfoMenu.AddMenuItem('0', mainMenu);
 
         typeSelectMenu.AddMenuItem('0', mainMenu);
         typeSelectMenu.AddMenuItem('1', selectTypeUintMenu);
