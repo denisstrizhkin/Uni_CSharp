@@ -1,173 +1,163 @@
-﻿class Program
-{
-    private class TypeContainer
-    {
-        private Type type = typeof(int);
-        public void set(Type type)
-        {
-            this.type = type;
+﻿namespace lab1; 
+
+internal abstract class Program {
+    private class TypeContainer {
+        private Type _type = typeof(int);
+
+        public void Set(Type type) {
+            _type = type;
         }
 
-        public Type get()
-        {
-            return type;
+        public Type Get() {
+            return _type;
         }
     }
 
-    private class Menu
-    {
-        private readonly Dictionary<char, Menu> menuItems = new Dictionary<char, Menu>();
-        private readonly Func<string>? message;
-        private readonly String description;
-        private readonly Action<char>? func;
+    private class Menu {
+        private readonly Dictionary<char, Menu> _menuItems = new Dictionary<char, Menu>();
+        private readonly Func<string>? _message;
+        private readonly string _description;
+        private readonly Action? _func;
 
-        public Menu(String description, Func<string>? message)
-        {
-            this.message = message;
-            this.description = description;
+        public Menu(string description, Func<string>? message) {
+            _message = message;
+            _description = description;
         }
 
-        public Menu(String description, Action<char> func)
-        {
-            this.description = description;
-            this.func = func;
+        public Menu(string description, Action func) {
+            _description = description;
+            _func = func;
         }
 
-        public void Run()
-        {
-            System.Console.Clear();
-            if (func == null)
-            {
+        public void Run() {
+            Console.Clear();
+            if (_func == null) {
                 PrintMenuInfo();
-                while (true)
-                {
-                    char input = Console.ReadKey().KeyChar;
+                while (true) {
+                    var input = char.ToUpper(Console.ReadKey().KeyChar);
 
-                    Menu? nextMenu;
-                    if (menuItems.TryGetValue(input, out nextMenu))
-                    {
+                    if (_menuItems.TryGetValue(input, out var nextMenu)) {
                         nextMenu.Run();
                         break;
                     }
-                    else
-                    {
-                        System.Console.Clear();
-                        PrintMenuInfo();
-                        System.Console.Write("Неправильный ввод, попробуйте еще: ");
-                    }
+
+                    Console.Clear();
+                    PrintMenuInfo();
+                    Console.Write("Неправильный ввод, попробуйте еще: ");
                 }
             }
-            else
-            {
-                func('a');
+            else {
+                _func();
             }
         }
 
-        public void AddMenuItem(char id, Menu menu)
-        {
-            menuItems.Add(id, menu);
+        public void AddMenuItem(char id, Menu menu) {
+            _menuItems.Add(char.ToUpper(id), menu);
         }
 
-        private void PrintMenuInfo()
-        {
-            System.Console.WriteLine(message());
-            foreach (var pair in menuItems)
-            {
-                System.Console.WriteLine(pair.Key + " - " + pair.Value.description);
+        private void PrintMenuInfo() {
+            if (_message != null) {
+                Console.WriteLine(_message());
+            }
+            foreach (var pair in _menuItems) {
+                Console.WriteLine(pair.Key + " - " + pair.Value._description);
             }
         }
     }
 
-    public static void Main(String[] args)
-    {
-        TypeContainer typeContainer = new TypeContainer();
+    public static void Main(string[] args) {
+        var typeContainer = new TypeContainer();
 
-        Menu mainMenu = new Menu("Выход в главное меню", () => "Информация по типам:");
-        Menu quitMenu = new Menu("Выход из программы", c => System.Environment.Exit(1));
-        Menu typeSelectMenu = new Menu("Выбрать тип из списка", () => "Информация по типам\nВыберите тип:\n------");
+        var mainMenu = new Menu("Выход в главное меню", () => "Информация по типам:");
+        var quitMenu = new Menu("Выход из программы", () => Environment.Exit(1));
+        var typeSelectMenu = new Menu("Выбрать тип из списка", () => "Информация по типам\nВыберите тип:\n------");
 
-        Menu generalInfoMenu = new Menu("Общая информация по типам", c => {
-            System.Console.WriteLine("Общая информация по типам");
-            System.Console.WriteLine("Подключенные сборки: 17");
-            System.Console.WriteLine("Всего типов по всем подключенным сборкам: 26103");
-            System.Console.WriteLine("Ссылочные типы (только классы): 20601");
-            System.Console.WriteLine("Значимые типы: 4377");
-            System.Console.WriteLine("Информация в соответствии с вариантом №0");
-            System.Console.WriteLine("...");
-            System.Console.WriteLine("Нажмите любую клавишу, чтобы вернуться в главное меню");
+        var generalInfoMenu = new Menu("Общая информация по типам", () => {
+            Console.WriteLine("Общая информация по типам");
+            Console.WriteLine("Подключенные сборки: 17");
+            Console.WriteLine("Всего типов по всем подключенным сборкам: 26103");
+            Console.WriteLine("Ссылочные типы (только классы): 20601");
+            Console.WriteLine("Значимые типы: 4377");
+            Console.WriteLine("Информация в соответствии с вариантом №0");
+            Console.WriteLine("...");
+            Console.WriteLine("Нажмите любую клавишу, чтобы вернуться в главное меню");
             Console.ReadKey();
             mainMenu.Run();
         });
 
-        Menu typeInfoMenu = new Menu("Информация по типу", () =>
-        {
-            Type type = typeContainer.get();
+        var typeInfoMenu = new Menu("Информация по типу", () => {
+            var type = typeContainer.Get();
             return $"Информация по типу: {type.FullName}\n" +
-                $"    Значимый тип: {(type.IsValueType ? '+' : '-')}\n" +
-                $"    Пространство имен: {type.Namespace}\n" +
-                $"    Сборка: {type.Assembly.GetName().Name}\n" +
-                $"    Общее число элементов: {type.GetFields().Length + type.GetMethods().Length + type.GetProperties().Length}\n" +
-                $"    Число методов: {type.GetMethods().Length}\n" +
-                $"    Число свойств: {type.GetProperties().Length}\n" +
-                $"    Число пoлей: {type.GetFields().Length}\n" +
-                $"    Список полей: {String.Join(", ", type.GetFields().ToList().ConvertAll(f => f.Name))}\n" +
-                $"    Список свойств: {String.Join(", ", type.GetProperties().ToList().ConvertAll(f => f.Name))}\n";
+                   $"    Значимый тип: {(type.IsValueType ? '+' : '-')}\n" +
+                   $"    Пространство имен: {type.Namespace}\n" +
+                   $"    Сборка: {type.Assembly.GetName().Name}\n" +
+                   $"    Общее число элементов: {type.GetFields().Length + type.GetMethods().Length + type.GetProperties().Length}\n" +
+                   $"    Число методов: {type.GetMethods().Length}\n" +
+                   $"    Число свойств: {type.GetProperties().Length}\n" +
+                   $"    Число полей: {type.GetFields().Length}\n" +
+                   $"    Список полей: {string.Join(", ", type.GetFields().ToList().ConvertAll(f => f.Name))}\n" +
+                   $"    Список свойств: {string.Join(", ", type.GetProperties().ToList().ConvertAll(f => f.Name))}\n";
         });
 
-        Menu additionalTypeInfoMenu = new Menu("Вывод дополнительной информации по методам", () => {
+        var additionalTypeInfoMenu = new Menu("Вывод дополнительной информации по методам", () => {
+            var methods = typeContainer.Get().GetMethods();
+            var overloads = new Dictionary<string, int>();
+
+            foreach (var m in methods) {
+                if (overloads.ContainsKey(m.Name)) {
+                    overloads[m.Name]++;
+                }
+                else {
+                    overloads.Add(m.Name, 1);
+                }
+            }
+
             return "test";
         });
 
-        Menu selectTypeUintMenu = new Menu("uint", c =>
-        {
-            typeContainer.set(typeof(uint));
+        var selectTypeUintMenu = new Menu("uint", () => {
+            typeContainer.Set(typeof(uint));
             typeInfoMenu.Run();
         });
-        Menu selectTypeIntMenu = new Menu("int", c =>
-        {
-            typeContainer.set(typeof(int));
+        var selectTypeIntMenu = new Menu("int", () => {
+            typeContainer.Set(typeof(int));
             typeInfoMenu.Run();
         });
-        Menu selectTypeLongMenu = new Menu("long", c =>
-        {
-            typeContainer.set(typeof(long));
+        var selectTypeLongMenu = new Menu("long", () => {
+            typeContainer.Set(typeof(long));
             typeInfoMenu.Run();
         });
-        Menu selectTypeFloatMenu = new Menu("float", c =>
-        {
-            typeContainer.set(typeof(float));
+        var selectTypeFloatMenu = new Menu("float", () => {
+            typeContainer.Set(typeof(float));
             typeInfoMenu.Run();
         });
-        Menu selectTypeDoubleMenu = new Menu("double", c =>
-        {
-            typeContainer.set(typeof(double));
+        var selectTypeDoubleMenu = new Menu("double", () => {
+            typeContainer.Set(typeof(double));
             typeInfoMenu.Run();
         });
-        Menu selectTypeCharMenu = new Menu("char", c =>
-        {
-            typeContainer.set(typeof(char));
+        var selectTypeCharMenu = new Menu("char", () => {
+            typeContainer.Set(typeof(char));
             typeInfoMenu.Run();
         });
-        Menu selectTypeStringMenu = new Menu("string", c =>
-        {
-            typeContainer.set(typeof(string));
+        var selectTypeStringMenu = new Menu("string", () => {
+            typeContainer.Set(typeof(string));
             typeInfoMenu.Run();
         });
-        Menu selectTypeVectorMenu = new Menu("Vector", c =>
-        {
-            typeContainer.set(typeof(float));
+        var selectTypeVectorMenu = new Menu("Vector", () => {
+            typeContainer.Set(typeof(float));
             typeInfoMenu.Run();
         });
-        Menu selectTypeMatrixMenu = new Menu("Matrix", c =>
-        {
-            typeContainer.set(typeof(float));
+        var selectTypeMatrixMenu = new Menu("Matrix", () => {
+            typeContainer.Set(typeof(float));
             typeInfoMenu.Run();
         });
 
         mainMenu.AddMenuItem('0', quitMenu);
         mainMenu.AddMenuItem('1', generalInfoMenu);
         mainMenu.AddMenuItem('2', typeSelectMenu);
+
         typeInfoMenu.AddMenuItem('0', mainMenu);
+        typeInfoMenu.AddMenuItem('M', additionalTypeInfoMenu);
 
         typeSelectMenu.AddMenuItem('0', mainMenu);
         typeSelectMenu.AddMenuItem('1', selectTypeUintMenu);
