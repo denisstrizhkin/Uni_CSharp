@@ -41,7 +41,7 @@
                 PrintMenuInfo();
                 while (true)
                 {
-                    char input = Console.ReadLine()[0];
+                    char input = Console.ReadKey().KeyChar;
 
                     Menu? nextMenu;
                     if (menuItems.TryGetValue(input, out nextMenu))
@@ -84,8 +84,22 @@
 
         Menu mainMenu = new Menu("Выход в главное меню", () => "Информация по типам:");
         Menu quitMenu = new Menu("Выход из программы", c => System.Environment.Exit(1));
-        Menu typeSelectMenu = new Menu("Общая информация по типам", () => "Информация по типам\nВыберите тип:\n------");
-        Menu generalInfoMenu = new Menu("Общая информация по типам", () =>
+        Menu typeSelectMenu = new Menu("Выбрать тип из списка", () => "Информация по типам\nВыберите тип:\n------");
+
+        Menu generalInfoMenu = new Menu("Общая информация по типам", c => {
+            System.Console.WriteLine("Общая информация по типам");
+            System.Console.WriteLine("Подключенные сборки: 17");
+            System.Console.WriteLine("Всего типов по всем подключенным сборкам: 26103");
+            System.Console.WriteLine("Ссылочные типы (только классы): 20601");
+            System.Console.WriteLine("Значимые типы: 4377");
+            System.Console.WriteLine("Информация в соответствии с вариантом №0");
+            System.Console.WriteLine("...");
+            System.Console.WriteLine("Нажмите любую клавишу, чтобы вернуться в главное меню");
+            Console.ReadKey();
+            mainMenu.Run();
+        });
+
+        Menu typeInfoMenu = new Menu("Информация по типу", () =>
         {
             Type type = typeContainer.get();
             return $"Информация по типу: {type.FullName}\n" +
@@ -100,55 +114,60 @@
                 $"    Список свойств: {String.Join(", ", type.GetProperties().ToList().ConvertAll(f => f.Name))}\n";
         });
 
+        Menu additionalTypeInfoMenu = new Menu("Вывод дополнительной информации по методам", () => {
+            return "test";
+        });
+
         Menu selectTypeUintMenu = new Menu("uint", c =>
         {
             typeContainer.set(typeof(uint));
-            generalInfoMenu.Run();
+            typeInfoMenu.Run();
         });
         Menu selectTypeIntMenu = new Menu("int", c =>
         {
             typeContainer.set(typeof(int));
-            generalInfoMenu.Run();
+            typeInfoMenu.Run();
         });
         Menu selectTypeLongMenu = new Menu("long", c =>
         {
             typeContainer.set(typeof(long));
-            generalInfoMenu.Run();
+            typeInfoMenu.Run();
         });
         Menu selectTypeFloatMenu = new Menu("float", c =>
         {
             typeContainer.set(typeof(float));
-            generalInfoMenu.Run();
+            typeInfoMenu.Run();
         });
         Menu selectTypeDoubleMenu = new Menu("double", c =>
         {
             typeContainer.set(typeof(double));
-            generalInfoMenu.Run();
+            typeInfoMenu.Run();
         });
         Menu selectTypeCharMenu = new Menu("char", c =>
         {
             typeContainer.set(typeof(char));
-            generalInfoMenu.Run();
+            typeInfoMenu.Run();
         });
         Menu selectTypeStringMenu = new Menu("string", c =>
         {
             typeContainer.set(typeof(string));
-            generalInfoMenu.Run();
+            typeInfoMenu.Run();
         });
         Menu selectTypeVectorMenu = new Menu("Vector", c =>
         {
             typeContainer.set(typeof(float));
-            generalInfoMenu.Run();
+            typeInfoMenu.Run();
         });
         Menu selectTypeMatrixMenu = new Menu("Matrix", c =>
         {
             typeContainer.set(typeof(float));
-            generalInfoMenu.Run();
+            typeInfoMenu.Run();
         });
 
         mainMenu.AddMenuItem('0', quitMenu);
-        mainMenu.AddMenuItem('1', typeSelectMenu);
-        generalInfoMenu.AddMenuItem('0', mainMenu);
+        mainMenu.AddMenuItem('1', generalInfoMenu);
+        mainMenu.AddMenuItem('2', typeSelectMenu);
+        typeInfoMenu.AddMenuItem('0', mainMenu);
 
         typeSelectMenu.AddMenuItem('0', mainMenu);
         typeSelectMenu.AddMenuItem('1', selectTypeUintMenu);
