@@ -1,4 +1,6 @@
-﻿namespace lab1;
+﻿using System.Reflection;
+
+namespace lab1;
 
 internal abstract class Program {
     private class TypeContainer {
@@ -72,14 +74,28 @@ internal abstract class Program {
     }
 
     private static Menu CreateGeneralInfoMenu(Menu mainMenu) {
+        var refAssemblies = AppDomain.CurrentDomain.GetAssemblies();
+        var types = refAssemblies.SelectMany(asm => asm.GetTypes()).ToList();
+        var methods = types.SelectMany(type => type.GetMethods()
+            .Select(method => (typeName: type.FullName, method))).ToList();
+        
+        var nRefTypes = types.Count(type => type.IsClass);
+        var nValTypes = types.Count(type => type.IsValueType);
+
+        string MethodTupleToStr((string?, MethodInfo) t) => t.Item1 + "::" + t.Item2.Name;
+
+        var methodWithLongestName = methods.MaxBy(tuple => tuple.method.Name.Length);
+        var methodWithMostArguments = methods.MaxBy(tuple => tuple.method.GetParameters().Length);
+
         return new Menu("Общая информация по типам", () => {
             Console.WriteLine("Общая информация по типам");
-            Console.WriteLine("Подключенные сборки: 17");
-            Console.WriteLine("Всего типов по всем подключенным сборкам: 26103");
-            Console.WriteLine("Ссылочные типы (только классы): 20601");
-            Console.WriteLine("Значимые типы: 4377");
+            Console.WriteLine($"Подключенные сборки: {refAssemblies.Length}");
+            Console.WriteLine($"Всего типов по всем подключенным сборкам: {nRefTypes + nValTypes}");
+            Console.WriteLine($"Ссылочные типы (только классы): {nRefTypes}");
+            Console.WriteLine($"Значимые типы: {nValTypes}");
             Console.WriteLine("Информация в соответствии с вариантом №0");
-            Console.WriteLine("...");
+            Console.WriteLine($"Самое длинное название метода: {MethodTupleToStr(methodWithLongestName)}");
+            Console.WriteLine($"Метод с наибольшим числом аргументов: {MethodTupleToStr(methodWithMostArguments)}\n");
             Console.WriteLine("Нажмите любую клавишу, чтобы вернуться в главное меню");
             Console.ReadKey();
             mainMenu.Run();
