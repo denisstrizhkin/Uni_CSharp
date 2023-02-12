@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System.Numerics;
+using System.Reflection;
 
 namespace lab1;
 
@@ -22,7 +23,7 @@ internal abstract class Program {
     }
 
     private class Menu {
-        private readonly Dictionary<char, Menu> _menuItems = new Dictionary<char, Menu>();
+        private readonly Dictionary<char, Menu> _menuItems = new();
         private readonly Func<string>? _message;
         private readonly string _description;
         private readonly Action? _func;
@@ -78,7 +79,7 @@ internal abstract class Program {
         var types = refAssemblies.SelectMany(asm => asm.GetTypes()).ToList();
         var methods = types.SelectMany(type => type.GetMethods()
             .Select(method => (typeName: type.FullName, method))).ToList();
-        
+
         var nRefTypes = types.Count(type => type.IsClass);
         var nValTypes = types.Count(type => type.IsValueType);
 
@@ -105,16 +106,22 @@ internal abstract class Program {
     private static Menu CreateTypeInfoMenu(TypeContainer typeContainer) {
         return new Menu("Информация по типу", () => {
             var type = typeContainer.Get();
+            var nMethods = type.GetMethods().Length;
+            var nProperties = type.GetProperties().Length;
+            var nFields = type.GetFields().Length;
+            var fieldsStr = string.Join(", ", type.GetFields().Select(f => f.Name));
+            var propertiesStr = string.Join(", ", type.GetProperties().Select(f => f.Name));
+            
             return $"Информация по типу: {type.FullName}\n" +
                    $"    Значимый тип: {(type.IsValueType ? '+' : '-')}\n" +
                    $"    Пространство имен: {type.Namespace}\n" +
                    $"    Сборка: {type.Assembly.GetName().Name}\n" +
-                   $"    Общее число элементов: {type.GetFields().Length + type.GetMethods().Length + type.GetProperties().Length}\n" +
-                   $"    Число методов: {type.GetMethods().Length}\n" +
-                   $"    Число свойств: {type.GetProperties().Length}\n" +
-                   $"    Число полей: {type.GetFields().Length}\n" +
-                   $"    Список полей: {string.Join(", ", type.GetFields().ToList().ConvertAll(f => f.Name))}\n" +
-                   $"    Список свойств: {string.Join(", ", type.GetProperties().ToList().ConvertAll(f => f.Name))}\n";
+                   $"    Общее число элементов: {nFields + nMethods + nProperties}\n" +
+                   $"    Число методов: {nMethods}\n" +
+                   $"    Число свойств: {nProperties}\n" +
+                   $"    Число полей: {nFields}\n" +
+                   $"    Список полей: {fieldsStr}\n" +
+                   $"    Список свойств: {propertiesStr}\n";
         });
     }
 
@@ -153,6 +160,7 @@ internal abstract class Program {
         var generalInfoMenu = CreateGeneralInfoMenu(mainMenu);
         var typeInfoMenu = CreateTypeInfoMenu(typeContainer);
         var additionalTypeInfoMenu = CreateAdditionalTypeInfoMenu(typeContainer);
+        var consoleColorMenu = new Menu("Параметры консоли", () => "Выберите опцию:");
 
         var selectTypeUintMenu = new Menu("uint", () => {
             typeContainer.Set(typeof(uint));
@@ -183,18 +191,21 @@ internal abstract class Program {
             typeInfoMenu.Run();
         });
         var selectTypeVectorMenu = new Menu("Vector", () => {
-            typeContainer.Set(typeof(float));
+            typeContainer.Set(typeof(Vector));
             typeInfoMenu.Run();
         });
         var selectTypeMatrixMenu = new Menu("Matrix", () => {
-            typeContainer.Set(typeof(float));
+            typeContainer.Set(typeof(Matrix4x4));
             typeInfoMenu.Run();
         });
 
         mainMenu.AddMenuItem('0', quitMenu);
         mainMenu.AddMenuItem('1', generalInfoMenu);
         mainMenu.AddMenuItem('2', typeSelectMenu);
+        mainMenu.AddMenuItem('3', consoleColorMenu);
 
+        consoleColorMenu.AddMenuItem('0', mainMenu);
+        
         typeInfoMenu.AddMenuItem('0', mainMenu);
         typeInfoMenu.AddMenuItem('M', additionalTypeInfoMenu);
 
