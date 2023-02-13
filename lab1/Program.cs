@@ -111,7 +111,7 @@ internal abstract class Program {
             var nFields = type.GetFields().Length;
             var fieldsStr = string.Join(", ", type.GetFields().Select(f => f.Name));
             var propertiesStr = string.Join(", ", type.GetProperties().Select(f => f.Name));
-            
+
             return $"Информация по типу: {type.FullName}\n" +
                    $"    Значимый тип: {(type.IsValueType ? '+' : '-')}\n" +
                    $"    Пространство имен: {type.Namespace}\n" +
@@ -141,13 +141,19 @@ internal abstract class Program {
                 overloads[m.Name].MaxArgs = Math.Max(m.GetParameters().Length, overloads[m.Name].MaxArgs);
             }
 
+            var firstColSize = methods.MaxBy(method => method.Name.Length)!.Name.Length;
+
+            string GetLine(string name, string count, string minmax) =>
+                name.PadRight(firstColSize) + "   " + count.PadRight(20) + minmax.PadRight(20) + '\n';
+
             var result = $"Методы типа {typeContainer.Get().FullName}\n" +
-                         $"{"Название",-20} {"Число перегрузок",-20} {"Число параметров",-20}\n";
+                         GetLine("Название", "Число перегрузок", "Число параметров");
             return overloads.Aggregate(result,
                 (current, pair) =>
-                    current +
-                    $"{pair.Key,-20} {pair.Value.Count,-20} " +
-                    $"{(pair.Value.MinArgs == pair.Value.MaxArgs ? pair.Value.MinArgs : pair.Value.MinArgs + ".." + pair.Value.MaxArgs),-20}\n");
+                    current + GetLine(pair.Key, Convert.ToString(pair.Value.Count),
+                        pair.Value.MinArgs == pair.Value.MaxArgs
+                            ? Convert.ToString(pair.Value.MinArgs)
+                            : pair.Value.MinArgs + ".." + pair.Value.MaxArgs));
         });
     }
 
@@ -205,7 +211,7 @@ internal abstract class Program {
         mainMenu.AddMenuItem('3', consoleColorMenu);
 
         consoleColorMenu.AddMenuItem('0', mainMenu);
-        
+
         typeInfoMenu.AddMenuItem('0', mainMenu);
         typeInfoMenu.AddMenuItem('M', additionalTypeInfoMenu);
 
