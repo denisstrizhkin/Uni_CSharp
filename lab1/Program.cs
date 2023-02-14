@@ -5,15 +5,11 @@ namespace lab1;
 
 internal abstract class Program {
     private class TypeContainer {
-        private Type _type = typeof(int);
+        public Type Type = typeof(int);
+    }
 
-        public void Set(Type type) {
-            _type = type;
-        }
-
-        public Type Get() {
-            return _type;
-        }
+    private class ColorContainer {
+        public ConsoleColor Color = ConsoleColor.Black;
     }
 
     private class MethodOverload {
@@ -105,7 +101,7 @@ internal abstract class Program {
 
     private static Menu CreateTypeInfoMenu(TypeContainer typeContainer) {
         return new Menu("Информация по типу", () => {
-            var type = typeContainer.Get();
+            var type = typeContainer.Type;
             var nMethods = type.GetMethods().Length;
             var nProperties = type.GetProperties().Length;
             var nFields = type.GetFields().Length;
@@ -127,7 +123,7 @@ internal abstract class Program {
 
     private static Menu CreateAdditionalTypeInfoMenu(TypeContainer typeContainer) {
         return new Menu("Вывод дополнительной информации по методам", () => {
-            var methods = typeContainer.Get().GetMethods();
+            var methods = typeContainer.Type.GetMethods();
             var overloads = new Dictionary<string, MethodOverload>();
 
             foreach (var m in methods) {
@@ -146,7 +142,7 @@ internal abstract class Program {
             string GetLine(string name, string count, string minmax) =>
                 name.PadRight(firstColSize) + "   " + count.PadRight(20) + minmax.PadRight(20) + '\n';
 
-            var result = $"Методы типа {typeContainer.Get().FullName}\n" +
+            var result = $"Методы типа {typeContainer.Type.FullName}\n" +
                          GetLine("Название", "Число перегрузок", "Число параметров");
             return overloads.Aggregate(result,
                 (current, pair) =>
@@ -159,51 +155,61 @@ internal abstract class Program {
 
     public static void Main(string[] args) {
         var typeContainer = new TypeContainer();
+        var colorContainer = new ColorContainer();
 
         var mainMenu = new Menu("Выход в главное меню", () => "Информация по типам:");
-        var quitMenu = new Menu("Выход из программы", () => Environment.Exit(1));
+        var quitMenu = new Menu("Выход из программы", () => {
+            Console.ResetColor();
+            Environment.Exit(1);
+        });
         var typeSelectMenu = new Menu("Выбрать тип из списка", () => "Информация по типам\nВыберите тип:\n------");
         var generalInfoMenu = CreateGeneralInfoMenu(mainMenu);
         var typeInfoMenu = CreateTypeInfoMenu(typeContainer);
         var additionalTypeInfoMenu = CreateAdditionalTypeInfoMenu(typeContainer);
         var consoleColorMenu = new Menu("Параметры консоли", () => "Выберите опцию:");
+        var colorSelectMenu = new Menu("Выбор цвета", () => "Выберите цвет:");
+        var setForeGroundColor = new Menu("Установить цвет текста", () => {
+            colorSelectMenu.Run();
+            Console.ForegroundColor = colorContainer.Color;
+            mainMenu.Run();
+        });
+        var setBackGroundColor = new Menu("Установить цвет фона", () => {
+            colorSelectMenu.Run();
+            Console.BackgroundColor = colorContainer.Color;
+            mainMenu.Run();
+        });
 
-        var selectTypeUintMenu = new Menu("uint", () => {
-            typeContainer.Set(typeof(uint));
+        void SetType(Type t) {
+            typeContainer.Type = t;
             typeInfoMenu.Run();
-        });
-        var selectTypeIntMenu = new Menu("int", () => {
-            typeContainer.Set(typeof(int));
-            typeInfoMenu.Run();
-        });
-        var selectTypeLongMenu = new Menu("long", () => {
-            typeContainer.Set(typeof(long));
-            typeInfoMenu.Run();
-        });
-        var selectTypeFloatMenu = new Menu("float", () => {
-            typeContainer.Set(typeof(float));
-            typeInfoMenu.Run();
-        });
-        var selectTypeDoubleMenu = new Menu("double", () => {
-            typeContainer.Set(typeof(double));
-            typeInfoMenu.Run();
-        });
-        var selectTypeCharMenu = new Menu("char", () => {
-            typeContainer.Set(typeof(char));
-            typeInfoMenu.Run();
-        });
-        var selectTypeStringMenu = new Menu("string", () => {
-            typeContainer.Set(typeof(string));
-            typeInfoMenu.Run();
-        });
-        var selectTypeVectorMenu = new Menu("Vector", () => {
-            typeContainer.Set(typeof(Vector));
-            typeInfoMenu.Run();
-        });
-        var selectTypeMatrixMenu = new Menu("Matrix", () => {
-            typeContainer.Set(typeof(Matrix4x4));
-            typeInfoMenu.Run();
-        });
+        }
+
+        var selectTypeUintMenu = new Menu("uint", () => { SetType(typeof(uint)); });
+        var selectTypeIntMenu = new Menu("int", () => { SetType(typeof(int)); });
+        var selectTypeLongMenu = new Menu("long", () => { SetType(typeof(long)); });
+        var selectTypeFloatMenu = new Menu("float", () => { SetType(typeof(float)); });
+        var selectTypeDoubleMenu = new Menu("double", () => { SetType(typeof(double)); });
+        var selectTypeCharMenu = new Menu("char", () => { SetType(typeof(char)); });
+        var selectTypeStringMenu = new Menu("string", () => { SetType(typeof(string)); });
+        var selectTypeVectorMenu = new Menu("Vector", () => { SetType(typeof(Vector)); });
+        var selectTypeMatrixMenu = new Menu("Matrix", () => { SetType(typeof(Matrix4x4)); });
+
+        var selectBlack = new Menu("Черный", () => colorContainer.Color = ConsoleColor.Black);
+        var selectDarkBlue = new Menu("Темно-синий", () => colorContainer.Color = ConsoleColor.DarkBlue);
+        var selectDarkGreen = new Menu("Темно-зеленый", () => colorContainer.Color = ConsoleColor.DarkGreen);
+        var selectDarkCyan = new Menu("Темно-голубой", () => colorContainer.Color = ConsoleColor.DarkCyan);
+        var selectDarkRed = new Menu("Темно-красный", () => colorContainer.Color = ConsoleColor.DarkRed);
+        var selectDarkMagenta = new Menu("Темно-пурпурный", () => colorContainer.Color = ConsoleColor.DarkMagenta);
+        var selectDarkYellow = new Menu("Темно-желтый", () => colorContainer.Color = ConsoleColor.DarkYellow);
+        var selectGray = new Menu("Серый", () => colorContainer.Color = ConsoleColor.Gray);
+        var selectDarkGray = new Menu("Темно-серый", () => colorContainer.Color = ConsoleColor.DarkGray);
+        var selectBlue = new Menu("Синий", () => colorContainer.Color = ConsoleColor.Blue);
+        var selectGreen = new Menu("Зеленый", () => colorContainer.Color = ConsoleColor.Green);
+        var selectCyan = new Menu("Голубой", () => colorContainer.Color = ConsoleColor.Cyan);
+        var selectRed = new Menu("Красный", () => colorContainer.Color = ConsoleColor.Red);
+        var selectMagenta = new Menu("Пурпурный", () => colorContainer.Color = ConsoleColor.Magenta);
+        var selectYellow = new Menu("Желтый", () => colorContainer.Color = ConsoleColor.Yellow);
+        var selectWhite = new Menu("Белый", () => colorContainer.Color = ConsoleColor.White);
 
         mainMenu.AddMenuItem('0', quitMenu);
         mainMenu.AddMenuItem('1', generalInfoMenu);
@@ -211,6 +217,8 @@ internal abstract class Program {
         mainMenu.AddMenuItem('3', consoleColorMenu);
 
         consoleColorMenu.AddMenuItem('0', mainMenu);
+        consoleColorMenu.AddMenuItem('1', setForeGroundColor);
+        consoleColorMenu.AddMenuItem('2', setBackGroundColor);
 
         typeInfoMenu.AddMenuItem('0', mainMenu);
         typeInfoMenu.AddMenuItem('M', additionalTypeInfoMenu);
@@ -227,6 +235,24 @@ internal abstract class Program {
         typeSelectMenu.AddMenuItem('7', selectTypeStringMenu);
         typeSelectMenu.AddMenuItem('8', selectTypeVectorMenu);
         typeSelectMenu.AddMenuItem('9', selectTypeMatrixMenu);
+
+        colorSelectMenu.AddMenuItem('0', mainMenu);
+        colorSelectMenu.AddMenuItem('1', selectBlack);
+        colorSelectMenu.AddMenuItem('2', selectDarkBlue);
+        colorSelectMenu.AddMenuItem('3', selectDarkGreen);
+        colorSelectMenu.AddMenuItem('4', selectDarkCyan);
+        colorSelectMenu.AddMenuItem('5', selectDarkRed);
+        colorSelectMenu.AddMenuItem('6', selectDarkMagenta);
+        colorSelectMenu.AddMenuItem('7', selectDarkYellow);
+        colorSelectMenu.AddMenuItem('8', selectGray);
+        colorSelectMenu.AddMenuItem('9', selectDarkGray);
+        colorSelectMenu.AddMenuItem('A', selectBlue);
+        colorSelectMenu.AddMenuItem('B', selectGreen);
+        colorSelectMenu.AddMenuItem('C', selectCyan);
+        colorSelectMenu.AddMenuItem('D', selectRed);
+        colorSelectMenu.AddMenuItem('E', selectMagenta);
+        colorSelectMenu.AddMenuItem('F', selectYellow);
+        colorSelectMenu.AddMenuItem('G', selectWhite);
 
         mainMenu.Run();
     }
