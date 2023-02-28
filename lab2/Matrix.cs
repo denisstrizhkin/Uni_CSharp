@@ -37,8 +37,7 @@ public class Matrix {
     public int Rows => _data.GetLength(0);
 
     public int Columns => _data.GetLength(1);
-
-// размер квадратной матрицы
+    
     public int? Size => IsSquared ? _data.Length : null;
 
     public bool IsSquared => Rows == Columns;
@@ -66,6 +65,38 @@ public class Matrix {
             return true;
         }
     }
+
+    public static explicit operator Matrix(double[,] arr) {
+        throw new NotImplementedException();
+    }
+
+    public override string ToString() {
+        return base.ToString();
+    }
+
+    public static Matrix GetUnity(int Size) {
+        throw new NotImplementedException();
+    }
     
-    
+    public static Matrix GetEmpty(int Size) {
+        throw new NotImplementedException();
+    }
+
+    public bool IsSymmetric {
+        get {
+            throw new NotImplementedException();
+        }
+    }
+
+    public static Matrix operator +(Matrix m1, Matrix m2) {
+        throw new NotImplementedException();
+    }
+
+    public Matrix Transpose() {
+        throw new NotImplementedException();
+    }
+
+    public static Matrix Parse(string s) {
+        throw new NotImplementedException();
+    }
 }
