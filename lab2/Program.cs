@@ -4,6 +4,5 @@ namespace lab2;
 
 internal abstract class Program {
     public static void Main(string[] args) {
-        Console.WriteLine("hello");
     }
 }
