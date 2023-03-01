@@ -168,6 +168,24 @@ public class MatrixTests {
         Assert.AreEqual(e[1, 0], 0.8);
         Assert.AreEqual(e[1, 1], 1.0);
         Assert.AreEqual(e[1, 2], 1.2);
+        
+        var rnd = new Random();
+        var m1 = new Matrix(10, 20);
+        var m2 = new Matrix(10, 20);
+
+        for (var i = 0; i < m1.Rows; i++) {
+            for (var j = 0; j < m2.Columns; j++) {
+                m1[i, j] = rnd.NextDouble() * 2 - 1;
+                m2[i, j] = rnd.NextDouble() * 2 - 1;
+            }
+        }
+
+        var m3 = m1 + m2;
+        for (var i = 0; i < m1.Rows; i++) {
+            for (var j = 0; j < m2.Columns; j++) {
+                Assert.AreEqual(m1[i, j] + m2[i, j], m3[i, j]);
+            }
+        }
     }
 
     [TestMethod]
