@@ -91,8 +91,13 @@ internal abstract class Program {
             Console.WriteLine($"Ссылочные типы (только классы): {nRefTypes}");
             Console.WriteLine($"Значимые типы: {nValTypes}");
             Console.WriteLine("Информация в соответствии с вариантом №0");
-            Console.WriteLine($"Самое длинное название метода: {MethodTupleToStr(methodWithLongestName)}");
-            Console.WriteLine($"Метод с наибольшим числом аргументов: {MethodTupleToStr(methodWithMostArguments)}\n");
+            // Дополнительное задание
+            Console.WriteLine(
+                $"Самое длинное название метода: {MethodTupleToStr(methodWithLongestName) + $" ({methodWithLongestName.method.Name.Length})"}");
+            Console.WriteLine($"Метод с наибольшим числом аргументов: {MethodTupleToStr(methodWithMostArguments)}");
+            // Дополнительное задание 
+            Console.WriteLine(
+                $" - [ {string.Join(", ", methodWithMostArguments.method.GetParameters().Select(param => param.Name))} ]\n");
             Console.WriteLine("Нажмите любую клавишу, чтобы вернуться в главное меню");
             Console.ReadKey();
             mainMenu.Run();
@@ -121,41 +126,91 @@ internal abstract class Program {
         });
     }
 
-    private static Menu CreateAdditionalTypeInfoMenu(TypeContainer typeContainer) {
-        return new Menu("Вывод дополнительной информации по методам", () => {
-            var methods = typeContainer.Type.GetMethods();
-            var overloads = new Dictionary<string, MethodOverload>();
+    // Дополнительное задание
+    private static Menu CreateSelectByNumParametersMenu(TypeContainer typeContainer,
+        IDictionary<string, MethodOverload> overloads,
+        Menu additionalTypeInfoMenu) {
+        return new Menu("Отобрать по номеру параметров", () => {
+            var num = SelectNumber();
+            var methods = typeContainer.Type.GetMethods().Where(m => m.GetParameters().Length == num).ToArray();
+            overloads.Clear();
+            PopulateOverloads(methods, overloads);
+            Console.WriteLine(GetOverloadsString(overloads, typeContainer));
+            Console.WriteLine("Нажмите любую клавишу, чтобы вернуться назад");
+            Console.ReadKey();
+            additionalTypeInfoMenu.Run();
+        });
+    }
 
-            foreach (var m in methods) {
-                if (overloads.ContainsKey(m.Name)) {
-                    overloads[m.Name].Count++;
-                } else {
-                    overloads.Add(m.Name, new MethodOverload());
-                }
+    // Дополнительное задание
+    private static Menu CreateSelectByNumOverloadsMenu(TypeContainer typeContainer,
+        IDictionary<string, MethodOverload> overloads,
+        Menu additionalTypeInfoMenu) {
+        return new Menu("Отобрать по номеру перегрузок", () => {
+            var num = SelectNumber();
+            Console.WriteLine(GetOverloadsString(overloads.Where(o => o.Value.Count == num)
+                .ToDictionary(o => o.Key, o => o.Value), typeContainer));
+            Console.WriteLine("Нажмите любую клавишу, чтобы вернуться назад");
+            Console.ReadKey();
+            additionalTypeInfoMenu.Run();
+        });
+    }
 
-                overloads[m.Name].MinArgs = Math.Min(m.GetParameters().Length, overloads[m.Name].MinArgs);
-                overloads[m.Name].MaxArgs = Math.Max(m.GetParameters().Length, overloads[m.Name].MaxArgs);
+    private static void PopulateOverloads(IEnumerable<MethodInfo> methods,
+        IDictionary<string, MethodOverload> overloads) {
+        foreach (var m in methods) {
+            if (overloads.ContainsKey(m.Name)) {
+                overloads[m.Name].Count++;
+            } else {
+                overloads.Add(m.Name, new MethodOverload());
             }
 
-            var firstColSize = methods.MaxBy(method => method.Name.Length)!.Name.Length;
+            overloads[m.Name].MinArgs = Math.Min(m.GetParameters().Length, overloads[m.Name].MinArgs);
+            overloads[m.Name].MaxArgs = Math.Max(m.GetParameters().Length, overloads[m.Name].MaxArgs);
+        }
+    }
 
-            string GetLine(string name, string count, string minmax) =>
-                name.PadRight(firstColSize) + "   " + count.PadRight(20) + minmax.PadRight(20) + '\n';
+    private static string GetOverloadsString(IDictionary<string, MethodOverload> overloads,
+        TypeContainer typeContainer) {
+        if (overloads.Count == 0) {
+            return $"Методы типа {typeContainer.Type.FullName}\n Название   Число перегрузок   Число параметров\n";
+        }
 
-            var result = $"Методы типа {typeContainer.Type.FullName}\n" +
-                         GetLine("Название", "Число перегрузок", "Число параметров");
-            return overloads.Aggregate(result,
-                (current, pair) =>
-                    current + GetLine(pair.Key, Convert.ToString(pair.Value.Count),
-                        pair.Value.MinArgs == pair.Value.MaxArgs
-                            ? Convert.ToString(pair.Value.MinArgs)
-                            : pair.Value.MinArgs + ".." + pair.Value.MaxArgs));
-        });
+        var firstColSize = overloads.Select(pair => pair.Key).MaxBy(name => name.Length)!.Length;
+
+        string GetLine(string name, string count, string minmax) =>
+            name.PadRight(firstColSize) + "   " + count.PadRight(20) + minmax.PadRight(20) + '\n';
+
+        var result = $"Методы типа {typeContainer.Type.FullName}\n" +
+                     GetLine("Название", "Число перегрузок", "Число параметров");
+        return overloads.Aggregate(result,
+            (current, pair) =>
+                current + GetLine(pair.Key, Convert.ToString(pair.Value.Count),
+                    pair.Value.MinArgs == pair.Value.MaxArgs
+                        ? Convert.ToString(pair.Value.MinArgs)
+                        : pair.Value.MinArgs + ".." + pair.Value.MaxArgs));
+    }
+
+    private static int SelectNumber() {
+        int i;
+        Console.Write("Введите число: ");
+        while (true) {
+            try {
+                i = Convert.ToInt32(Console.ReadLine());
+                break;
+            } catch (FormatException) {
+                Console.Clear();
+                Console.Write("Неправильный ввод, попробуйте еще: ");
+            }
+        }
+
+        return i;
     }
 
     public static void Main(string[] args) {
         var typeContainer = new TypeContainer();
         var colorContainer = new ColorContainer();
+        var overloads = new Dictionary<string, MethodOverload>();
 
         var mainMenu = new Menu("Выход в главное меню", () => "Информация по типам:");
         var quitMenu = new Menu("Выход из программы", () => {
@@ -165,7 +220,10 @@ internal abstract class Program {
         var typeSelectMenu = new Menu("Выбрать тип из списка", () => "Информация по типам\nВыберите тип:\n------");
         var generalInfoMenu = CreateGeneralInfoMenu(mainMenu);
         var typeInfoMenu = CreateTypeInfoMenu(typeContainer);
-        var additionalTypeInfoMenu = CreateAdditionalTypeInfoMenu(typeContainer);
+        var additionalTypeInfoMenu = new Menu("Вывод дополнительной информации по методам", () => {
+            PopulateOverloads(typeContainer.Type.GetMethods(), overloads);
+            return GetOverloadsString(overloads, typeContainer);
+        });
         var consoleColorMenu = new Menu("Параметры консоли", () => "Выберите опцию:");
         var colorSelectMenu = new Menu("Выбор цвета", () => "Выберите цвет:");
         var setForeGroundColor = new Menu("Установить цвет текста", () => {
@@ -178,6 +236,8 @@ internal abstract class Program {
             Console.BackgroundColor = colorContainer.Color;
             mainMenu.Run();
         });
+        var selectByNumOverloads = CreateSelectByNumOverloadsMenu(typeContainer, overloads, additionalTypeInfoMenu);
+        var selectByNumParameters = CreateSelectByNumParametersMenu(typeContainer, overloads, additionalTypeInfoMenu);
 
         void SetType(Type t) {
             typeContainer.Type = t;
@@ -224,6 +284,8 @@ internal abstract class Program {
         typeInfoMenu.AddMenuItem('M', additionalTypeInfoMenu);
 
         additionalTypeInfoMenu.AddMenuItem('0', mainMenu);
+        additionalTypeInfoMenu.AddMenuItem('1', selectByNumOverloads);
+        additionalTypeInfoMenu.AddMenuItem('2', selectByNumParameters);
 
         typeSelectMenu.AddMenuItem('0', mainMenu);
         typeSelectMenu.AddMenuItem('1', selectTypeUintMenu);
